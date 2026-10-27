@@ -1,5 +1,6 @@
-import { setupOnline } from "./online-ui.js?v=4";
-import { setupVR } from "./vr.js";
+import { createSupermarket } from "./supermarket.js?v=6";
+import { setupOnline } from "./online-ui.js?v=6";
+import { setupVR } from "./vr.js?v=6";
 import * as THREE from "three";
 import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -99,7 +100,7 @@ function initializeEnvironment() {
     .load('TheHdr.exr', function (texture) {
       const envMap = pmremGenerator.fromEquirectangular(texture).texture;
       scene.environment = envMap;
-      scene.background = envMap; 
+      // Keep the supermarket background; HDR is used for reflections only. 
       texture.dispose();
       pmremGenerator.dispose();
       
@@ -1239,6 +1240,7 @@ function load3D() {
           }
           
         });
+        createSupermarket(scene, model);
         // setTimeout(makeBotMove, 1000);
         setTimeout(()=>{TurnDisplay(0)}, 1000);
         if (texturesToLoad === 0) {

@@ -1,4 +1,4 @@
-import { OnlineMatch, createPeer } from './multiplayer.js?v=4';
+import { OnlineMatch, createPeer } from './multiplayer.js?v=6';
 export function setupOnline(adapter) {
   const panel = document.createElement('section');
   panel.id = 'online-panel';
@@ -30,6 +30,23 @@ export function setupOnline(adapter) {
     const status = match.active ? `Sala ${match.code} · Você: ${color}. ${text}` : text;
     el('status').textContent = status;
     adapter.status(status);
+    let end = document.getElementById('online-game-over');
+    if (match.active && match.connected && match.chess.game_over()) {
+      if (!end) {
+        end = document.createElement('section'); end.id='online-game-over'; end.className='end-dialog';
+        end.setAttribute('role','dialog'); end.setAttribute('aria-modal','true');
+        end.innerHTML='<div class="game-over-card"><h2></h2><p></p><div class="game-over-actions"><button data-action="replay">Jogar novamente</button><button data-action="menu">Sair da sala / Menu</button><button data-action="board">Ver tabuleiro</button></div></div>';
+        document.body.append(end);
+        end.querySelector('[data-action="replay"]').onclick=()=>match.requestRematch();
+        end.querySelector('[data-action="menu"]').onclick=()=>{match.stop();location.reload();};
+        end.querySelector('[data-action="board"]').onclick=()=>end.classList.add('game-over-compact');
+      }
+      end.querySelector('h2').textContent=match.chess.in_checkmate() ? `XEQUE-MATE! ${match.chess.turn()==='w'?'Pretas':'Brancas'} venceram.` : 'EMPATE — partida encerrada';
+      end.querySelector('p').textContent=match.role==='spectator'?'Aguardando a decisão dos jogadores.':'Para a revanche, os dois jogadores precisam clicar em Jogar novamente.';
+      const replay=end.querySelector('[data-action="replay"]');
+      replay.hidden=match.role==='spectator'; replay.disabled=match.rematchVotes?.includes(match.role);
+      replay.textContent=replay.disabled?'Aguardando adversário…':'Jogar novamente';
+    } else end?.remove();
     el('create').disabled = el('join').disabled = el('watch').disabled = match.active;
     el('fullscreen').hidden = !match.active || match.role !== 'spectator';
     el('code').disabled = match.active;

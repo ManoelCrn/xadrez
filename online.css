@@ -46,3 +46,22 @@
 
 .spectator-mode #enter-vr, .spectator-mode .Reset { display: none !important; }
 #online-panel #online-watch { background: #315f50; }
+
+#online-game-over { position: fixed; inset: 0; z-index: 10003; display: flex; align-items: center; justify-content: center; padding: 16px; background: #0009; box-sizing: border-box; font: 16px/1.5 system-ui, sans-serif; color: #eef5ff; }
+#online-game-over .game-over-card { width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px; box-sizing: border-box; background: #071b32; border: 1px solid #7296ba; border-radius: 14px; box-shadow: 0 8px 32px #0005; }
+#online-game-over h2 { margin: 0 0 12px; font: 700 24px/1.3 system-ui, sans-serif; }
+#online-game-over p { margin: 0 0 20px; font: 16px/1.5 system-ui, sans-serif; text-shadow: none; text-align: left; }
+#online-game-over .game-over-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+#online-game-over button { position: static; width: auto; min-height: 44px; padding: 10px 14px; border: 1px solid #7296ba; border-radius: 7px; color: white; background: #204d78; font: 600 15px/1.4 system-ui, sans-serif; cursor: pointer; }
+#online-game-over #local-replay { background: #16735c; }
+#online-game-over button[hidden] { display: none; }
+#online-game-over.game-over-compact { inset: auto 0 64px; padding: 8px; background: transparent; pointer-events: none; }
+#online-game-over.game-over-compact .game-over-card { width: auto; padding: 12px; pointer-events: auto; }
+#online-game-over.game-over-compact h2, #online-game-over.game-over-compact p { display: none; }
+
+
+
+#local-game-over h2, #online-game-over h2 {font-size: clamp(28px, 4vw, 42px); color: #f9ce67;}
+#local-game-over .game-over-card, #online-game-over .game-over-card {width:min(560px,100%); border:2px solid #e6bd62;}
+#local-game-over button, #online-game-over button {min-height:52px;}
+#online-game-over button:disabled {opacity:.6;cursor:wait;}

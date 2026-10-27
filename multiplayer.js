@@ -15,7 +15,7 @@ export class OnlineMatch {
     this.spectatorCount = 0;
   }
   saved() { try { return JSON.parse(this.storage.getItem(STORAGE)); } catch { return null; } }
-  persist() { try { this.storage.setItem(STORAGE, JSON.stringify({ role: this.role, code: this.code, token: this.token, opponent: this.opponent, moves: this.moves, id: this.id })); } catch {} }
+  persist() { try { this.storage.setItem(STORAGE, JSON.stringify({ role: this.role, code: this.code, token: this.token, opponent: this.opponent, moves: this.moves, id: this.id, round: this.round })); } catch {} }
   status(message) { this.message = message; this.onState(this); }
   canMove() { return this.role !== 'spectator' && this.playersReady && this.active && this.connected && !this.pending && !this.chess.game_over() && this.chess.turn() === (this.role === 'host' ? 'w' : 'b'); }
   async start(role, code, resume = false) {
@@ -29,6 +29,7 @@ export class OnlineMatch {
     this.token = saved?.token || crypto.randomUUID();
     this.id = saved?.id || crypto.randomUUID();
     this.opponent = saved?.opponent || null;
+    this.round = saved?.round || 0; this.rematchVotes = [];
     this.moves = saved?.moves || [];
     this.chess = this.validateHistory(this.moves);
     this.active = true;
@@ -121,10 +122,15 @@ export class OnlineMatch {
         } else if (isHost && acceptedRole === 'guest' && this.connection === connection && data.type === 'move') {
           if (data.id !== this.id || data.ply !== this.moves.length || this.chess.turn() !== 'b') { this.sendState(connection); return; }
           this.commit(data.move);
+        } else if (isHost && acceptedRole === 'guest' && this.connection === connection && data.type === 'rematch') {
+          if (data.id === this.id) this.voteRematch('guest');
         } else if (!isHost && data.type === 'state') {
           const chess = this.validateHistory(data.moves);
           if (chess.fen() !== data.fen || typeof data.id !== 'string') throw new Error('Tabuleiro recebido não confere.');
-          if (acceptedRole && (data.id !== this.id || data.moves.length < this.moves.length)) return;
+          const round = Number.isInteger(data.round) ? data.round : 0;
+          if (acceptedRole && (data.id !== this.id || round < this.round || (round === this.round && data.moves.length < this.moves.length))) return;
+          this.round = round;
+          this.rematchVotes = Array.isArray(data.rematchVotes) ? data.rematchVotes : [];
           const changed = !acceptedRole || data.id !== this.id || JSON.stringify(data.moves) !== JSON.stringify(this.moves);
           this.id = data.id; this.moves = data.moves; this.chess = chess;
           acceptedRole = this.role; clearTimeout(timer); clearTimeout(this.moveTimer);
@@ -162,11 +168,26 @@ export class OnlineMatch {
     connection.on('close', disconnected); connection.on('error', disconnected);
   }
   sendState(target) {
-    const packet = { type: 'state', id: this.id, moves: this.moves, fen: this.chess.fen(), playersReady: this.playersReady, spectatorCount: this.spectators.size };
+    const packet = { round: this.round, rematchVotes: this.rematchVotes, type: 'state', id: this.id, moves: this.moves, fen: this.chess.fen(), playersReady: this.playersReady, spectatorCount: this.spectators.size };
     for (const connection of target ? [target] : [this.connection, ...this.spectators]) {
       if (!connection?.open) continue;
       try { connection.send(packet); } catch { connection.close(); }
     }
+  }
+  requestRematch() {
+    if (!this.active || !this.connected || !this.chess.game_over() || this.role === 'spectator') return false;
+    if (this.role === 'host') this.voteRematch('host');
+    else this.connection.send({type:'rematch', id:this.id});
+    return true;
+  }
+  voteRematch(role) {
+    if (!this.chess.game_over() || !this.playersReady || !['host','guest'].includes(role)) return;
+    if (!this.rematchVotes.includes(role)) this.rematchVotes.push(role);
+    if (this.rematchVotes.length === 2) {
+      this.round++; this.moves=[]; this.chess=new this.Chess(); this.rematchVotes=[];
+      this.persist(); this.onBoard(this.moves);
+    }
+    this.sendState(); this.status('Revanche solicitada. Aguardando os dois jogadores.');
   }
   submit(move) {
     if (!this.canMove()) return false;

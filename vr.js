@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { VRButton } from './jsm/webxr/VRButton.js?v=6';
 export function setupVR({ renderer, scene, camera, controls, targets, select, boardCenter, canPlay, promote }) {
   renderer.xr.enabled = true;
   renderer.xr.setReferenceSpaceType('local-floor');
@@ -36,18 +36,37 @@ export function setupVR({ renderer, scene, camera, controls, targets, select, bo
     ctx.fillText(line,32,y); ctx.font = '25px sans-serif'; ctx.fillStyle = '#a8d4ff'; ctx.fillText('Gatilho: selecionar · Botão do sistema: sair do VR',32,226); hudTexture.needsUpdate = true;
   };
   writeStatus(status);
+  const endGroup = new THREE.Group(); endGroup.position.set(0, -.1, -.85); camera.add(endGroup);
+  const endTargets = [];
+  ['Jogar novamente','Voltar ao menu'].forEach((label,i)=>{
+    const canvas=document.createElement('canvas'); canvas.width=512;canvas.height=128;
+    const c=canvas.getContext('2d');c.fillStyle=i?'#26455b':'#126859';c.fillRect(0,0,512,128);c.fillStyle='white';c.font='bold 36px sans-serif';c.textAlign='center';c.fillText(label,256,78);
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(.34,.085),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(canvas),depthTest:false}));
+    mesh.position.x=(i-.5)*.37;mesh.userData.endAction=i;mesh.renderOrder=102;endGroup.add(mesh);endTargets.push(mesh);
+  });
+  endGroup.visible=false;
   function hit(controller) {
     scene.updateMatrixWorld(true);
     rotation.identity().extractRotation(controller.matrixWorld);
     raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
     raycaster.ray.direction.set(0,0,-1).applyMatrix4(rotation);
-    return raycaster.intersectObjects(promotionGroup.visible ? promotionTargets : targets, true)[0];
+    return raycaster.intersectObjects(endGroup.visible ? endTargets : promotionGroup.visible ? promotionTargets : targets, true)[0];
   }
   for (let i = 0; i < 2; i++) {
     const controller = renderer.xr.getController(i);
     const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,0,-1)]), new THREE.LineBasicMaterial({ color: 0x7dd3fc }));
     line.scale.z = 2; controller.add(line); rig.add(controller); controllers.push(controller);
     controller.addEventListener('selectstart', () => {
+      if (endGroup.visible) {
+        const hitResult=hit(controller); if(!hitResult)return;
+        const panel=document.getElementById('online-game-over') || document.getElementById('local-game-over');
+        const selector=hitResult.object.userData.endAction===0 ? '#local-replay, [data-action="replay"]' : '#local-menu, [data-action="menu"]';
+        const button=panel?.querySelector(selector);if(button && !button.hidden && !button.disabled) {
+          if(hitResult.object.userData.endAction===1) renderer.xr.getSession()?.end();
+          button.click();
+        }
+        return;
+      }
       if (!canPlay()) return;
       const intersection = hit(controller);
       if (!intersection) return;
@@ -70,7 +89,13 @@ export function setupVR({ renderer, scene, camera, controls, targets, select, bo
   });
   return { status: writeStatus, update() {
     if (!renderer.xr.isPresenting) return;
-    promotionGroup.visible = document.getElementById('promosion').classList.contains('promot');
+    const endPanel=document.getElementById('online-game-over') || document.getElementById('local-game-over');
+    endGroup.visible=!!endPanel;
+    if(endPanel) {
+      const title=endPanel.querySelector('h2')?.textContent;
+      if(title && status!==title)writeStatus(title);
+    }
+    promotionGroup.visible = !endGroup.visible && document.getElementById('promosion').classList.contains('promot');
     for (const controller of controllers) { const intersection = hit(controller); controller.children[0].scale.z = intersection ? intersection.distance : 2; }
   } };
 }

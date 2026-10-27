@@ -167,3 +167,18 @@ test('eight spectators are independent from the two player slots', async () => {
     for(const w of viewers.slice(0,8))assert.equal(w.chess.fen(),h.chess.fen());
   } finally {h.stop();g.stop();for(const w of viewers)w.stop();}
 });
+
+test('rematch needs both players and resets players and spectator together', async () => {
+  const [h,g]=await pair(); const spectator=create();
+  try {
+    await spectator.start('spectator','12345678');await tick();await tick();
+    for(const [player,from,to] of [[h,'f2','f3'],[g,'e7','e5'],[h,'g2','g4'],[g,'d8','h4']]) {assert.equal(player.submit({from,to}),true);await tick();}
+    assert.equal(h.chess.in_checkmate(),true);
+    assert.equal(spectator.requestRematch(),false);
+    h.requestRematch();await tick();assert.equal(h.moves.length,4);
+    g.requestRematch();await tick();await tick();
+    for(const p of [h,g,spectator]) {assert.equal(p.moves.length,0);assert.equal(p.chess.game_over(),false);assert.equal(p.round,1);}
+    assert.equal(h.submit({from:'e2',to:'e4'}),true);await tick();
+    assert.equal(g.chess.fen(),h.chess.fen());assert.equal(spectator.chess.fen(),h.chess.fen());
+  } finally {h.stop();g.stop();spectator.stop();}
+});

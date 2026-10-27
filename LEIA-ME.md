@@ -39,3 +39,14 @@ Os testes podem ser executados com:
     node --test tests/online.test.mjs
 
 As licenças das dependências estão em `build/`. Modelos e demais recursos mantêm os termos do projeto original.
+
+
+## Atualização: supermercado e fim de partida
+- Cenário de supermercado com setores, produtos em prateleiras e caixas.
+- Peças tradicionais preservadas; objetos e links de redes sociais removidos.
+- Interface em português.
+- Aviso de fim de partida com jogar novamente, voltar ao menu e ver tabuleiro.
+- Revanche online na mesma sala quando os dois jogadores aceitam; espectadores acompanham.
+- Botões de fim de partida disponíveis no VR pelo gatilho.
+
+Para atualizar uma cópia já ligada ao GitHub, copie o conteúdo desta pasta sobre a pasta do seu projeto, preservando a pasta .git existente. Não é necessário recriar o repositório.
