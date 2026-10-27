@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <title>Xadrez 3D — PC e VR</title>
+    <title>Xadrez no Mercado — PC e VR</title>
     <meta charset="utf-8" />
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
     <meta property="og:image" content="assets/favicon.ico">
@@ -16,7 +16,7 @@
       content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
     />
     <link type="text/css" rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="online.css?v=8" />
+    <link rel="stylesheet" href="online.css?v=16" />
     <style>
       body {
         background-color: #02184a;
@@ -29,23 +29,29 @@
     </style>
   </head>
 
-  <body>
-    <button class="ViewPoint" onclick="CameraTop()">
+  <body class="menu-active">
+    <button class="ViewPoint" onclick="CameraTop()" title="Mudar câmera" aria-label="Mudar câmera">
       <ion-icon name="color-wand-outline"></ion-icon>
     </button>
-    <button class="Reset" onclick="ReloadGame()">
+    <button class="Reset" onclick="ReloadGame()" title="Reiniciar partida" aria-label="Reiniciar partida">
       <ion-icon name="refresh-outline"></ion-icon>
     </button>
-    <div id="LoadingBox">
-      <p style="opacity: 0">Carregando o jogo</p>
-      <p class="facts active none" style="opacity: 0;" id="factstemp">...</p>
-      <div id="LoadInnerText">
-        <div>
-          <button class="loadButton">Carregando...</button>
-        </div>
+    <button class="HomeMenu" type="button" onclick="ReturnToMainMenu()" title="Voltar ao menu principal" aria-label="Voltar ao menu principal">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5 9v12h5v-7h4v7h5V9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Menu principal</span>
+    </button>
+    <div id="LoadingBox" class="market-menu">
+      <div class="menu-shell">
+        <header class="menu-brand">
+          <div class="menu-eyebrow"><span class="menu-symbol" aria-hidden="true">♞</span> MERCADO DA TURMA</div>
+          <h1>Xadrez<br><span>no Mercado</span></h1>
+          <p>Estratégia em cada jogada.</p>
+          <div class="menu-platforms"><span>COMPUTADOR</span><span>REALIDADE VIRTUAL</span></div>
+        </header>
+        <div id="LoadInnerText"><button class="loadButton" disabled>Preparando o mercado…</button></div>
+        <footer class="menu-footer"><p id="facts" class="facts"></p><p id="fingers"></p></footer>
       </div>
-      <p id="facts" class="facts"></p>
-      <p id="fingers">...</p>
+      <p id="factstemp" hidden></p>
     </div>
     <div id="container"></div>
 
@@ -59,30 +65,37 @@
 
     <div id="info"></div>
     <script>
+      function ShowMainMenu() {
+        document.getElementById('LoadingBox').classList.add('ready');
+        document.getElementById('LoadInnerText').innerHTML=`
+          <button class="menu-primary" onclick="active()">Jogar <span aria-hidden="true">→</span></button>
+          <button class="menu-secondary" onclick="ShowOnlineMenu()">Jogar online / Assistir</button>`;
+      }
       function active() {
-        stopFacts()
-        document.getElementById("LoadingBox").style.justifyContent='center';
-        document.getElementById("LoadingBox").innerHTML=`
-          <div>
-            <div><button class="btn options" onclick="ModeSet(0)"><i class="animation"></i>2 jogadores locais<i class="animation"></i></button></div>
-            <div><button class="btn options" onclick="VsBot()"><i class="animation"></i>Jogar contra o computador<i class="animation"></i></button></div>
-            <div><button class="btn options" onclick="ModeSet(3)"><i class="animation"></i>Assistir ao computador<i class="animation"></i></button></div>
-          </div>`;
+        stopFacts();
+        document.getElementById('LoadInnerText').innerHTML=`
+          <h2 class="menu-section-title">Como você quer jogar?</h2>
+          <button class="menu-choice" onclick="ModeSet(0)"><strong>2 jogadores locais</strong><span>Uma partida no mesmo dispositivo</span></button>
+          <button class="menu-choice" onclick="VsBot()"><strong>Contra o computador</strong><span>Escolha sua cor e desafie o computador</span></button>
+          <button class="menu-choice" onclick="ShowOnlineMenu()"><strong>Online e espectador</strong><span>PC e óculos na mesma sala</span></button>
+          <button class="menu-text" onclick="ModeSet(3)">Assistir ao computador</button>
+          <button class="menu-back" onclick="ShowMainMenu()">← Voltar</button>`;
       }
-      function ModeSet(Mode){
-        document.getElementById("LoadingBox").classList.add("Open");
-        setBotMode(Mode)
+      function ShowOnlineMenu() {
+        const panel=document.querySelector('#online-panel details');if(panel)panel.open=true;
+        document.getElementById('LoadInnerText').innerHTML=`<h2 class="menu-section-title">Jogue na mesma sala</h2><p class="menu-description">Crie uma sala ou informe o código no painel online. Para acompanhar a partida, escolha assistir como espectador.</p><button class="menu-back" onclick="ShowMainMenu()">← Voltar ao início</button>`;
       }
-
-
-
-      function VsBot(){
-        document.getElementById("LoadingBox").innerHTML=`
-          <div>
-            <p style="margin: 0;background-color: rgba(0, 0, 0, 0.596);border-radius: 10px;">Escolha a cor das suas peças</p>
-            <div><button class="btn options" onclick="ModeSet(2)" style="color: black;background-color: white;"><i class=""></i>Brancas<i class=""></i></button></div>
-            <div><button class="btn options" onclick="ModeSet(1)"><i class=""></i>Pretas<i class=""></i></button></div>
-          </div>`
+      function ModeSet(Mode) {
+        document.getElementById('LoadingBox').classList.add('Open');
+        document.body.classList.remove('menu-active');
+        setBotMode(Mode);
+      }
+      function VsBot() {
+        document.getElementById('LoadInnerText').innerHTML=`
+          <h2 class="menu-section-title">Escolha suas peças</h2>
+          <button class="menu-choice" onclick="ModeSet(2)"><strong>♔ Brancas</strong><span>Você faz a primeira jogada</span></button>
+          <button class="menu-choice" onclick="ModeSet(1)"><strong>♚ Pretas</strong><span>O computador começa</span></button>
+          <button class="menu-back" onclick="active()">← Voltar</button>`;
       }
 
       window.addEventListener("load", function () {
@@ -163,7 +176,7 @@
       }
     </script>
 
-    <script type="module" src="main.js?v=8"></script>
+    <script type="module" src="main.js?v=16"></script>
     <script
       type="module"
       src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"

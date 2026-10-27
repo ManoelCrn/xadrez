@@ -1,6 +1,6 @@
 {
-  "name": "Xadrez 3D — PC e VR",
-  "short_name": "Xadrez 3D",
+  "name": "Xadrez no Mercado — PC e VR",
+  "short_name": "Xadrez no Mercado",
   "description": "Jogo de xadrez 3D para computador e realidade virtual, com partidas locais, contra o computador e online, além de modo espectador.",
   "version": "3.0",
   "start_url": "index.html",

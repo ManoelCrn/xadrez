@@ -144,9 +144,10 @@ class VRButton {
 
 		function showWebXRNotFound() {
 
-			disableButton();
-
-			button.textContent = 'VR NÃO COMPATÍVEL';
+			// Unsupported desktop/mobile browsers need no inactive VR control.
+			button.style.display = 'none';
+			button.textContent = '';
+			button.onclick = null;
 
 		}
 

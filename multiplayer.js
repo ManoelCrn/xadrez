@@ -29,7 +29,7 @@ export class OnlineMatch {
     this.token = saved?.token || crypto.randomUUID();
     this.id = saved?.id || crypto.randomUUID();
     this.opponent = saved?.opponent || null;
-    this.round = saved?.round || 0; this.rematchVotes = [];
+    this.round = saved?.round || 0; this.rematchVotes = []; this.rematchDeclined = false;
     this.moves = saved?.moves || [];
     this.chess = this.validateHistory(this.moves);
     this.active = true;
@@ -123,7 +123,9 @@ export class OnlineMatch {
           if (data.id !== this.id || data.ply !== this.moves.length || this.chess.turn() !== 'b') { this.sendState(connection); return; }
           this.commit(data.move);
         } else if (isHost && acceptedRole === 'guest' && this.connection === connection && data.type === 'rematch') {
-          if (data.id === this.id) this.voteRematch('guest');
+          if (data.id === this.id && data.round === this.round) this.voteRematch('guest');
+        } else if (isHost && acceptedRole === 'guest' && this.connection === connection && data.type === 'rematch-decline') {
+          if (data.id === this.id && data.round === this.round) this.rejectRematch('guest');
         } else if (!isHost && data.type === 'state') {
           const chess = this.validateHistory(data.moves);
           if (chess.fen() !== data.fen || typeof data.id !== 'string') throw new Error('Tabuleiro recebido não confere.');
@@ -131,6 +133,7 @@ export class OnlineMatch {
           if (acceptedRole && (data.id !== this.id || round < this.round || (round === this.round && data.moves.length < this.moves.length))) return;
           this.round = round;
           this.rematchVotes = Array.isArray(data.rematchVotes) ? data.rematchVotes : [];
+          this.rematchDeclined = data.rematchDeclined === true;
           const changed = !acceptedRole || data.id !== this.id || JSON.stringify(data.moves) !== JSON.stringify(this.moves);
           this.id = data.id; this.moves = data.moves; this.chess = chess;
           acceptedRole = this.role; clearTimeout(timer); clearTimeout(this.moveTimer);
@@ -168,7 +171,7 @@ export class OnlineMatch {
     connection.on('close', disconnected); connection.on('error', disconnected);
   }
   sendState(target) {
-    const packet = { round: this.round, rematchVotes: this.rematchVotes, type: 'state', id: this.id, moves: this.moves, fen: this.chess.fen(), playersReady: this.playersReady, spectatorCount: this.spectators.size };
+    const packet = { rematchDeclined: this.rematchDeclined, round: this.round, rematchVotes: this.rematchVotes, type: 'state', id: this.id, moves: this.moves, fen: this.chess.fen(), playersReady: this.playersReady, spectatorCount: this.spectators.size };
     for (const connection of target ? [target] : [this.connection, ...this.spectators]) {
       if (!connection?.open) continue;
       try { connection.send(packet); } catch { connection.close(); }
@@ -177,11 +180,24 @@ export class OnlineMatch {
   requestRematch() {
     if (!this.active || !this.connected || !this.chess.game_over() || this.role === 'spectator') return false;
     if (this.role === 'host') this.voteRematch('host');
-    else this.connection.send({type:'rematch', id:this.id});
+    else this.connection.send({type:'rematch', id:this.id, round:this.round});
     return true;
+  }
+  declineRematch() {
+    if (!this.active || !this.connected || this.role === 'spectator' || !this.chess.game_over()
+        || this.rematchVotes.length !== 1 || this.rematchVotes.includes(this.role)) return false;
+    if (this.role === 'host') this.rejectRematch('host');
+    else this.connection.send({type:'rematch-decline', id:this.id, round:this.round});
+    return true;
+  }
+  rejectRematch(role) {
+    if (!this.chess.game_over() || this.rematchVotes.length !== 1 || this.rematchVotes.includes(role)) return;
+    this.rematchVotes=[]; this.rematchDeclined=true;
+    this.sendState(); this.status('Revanche recusada. A sala continua aberta.');
   }
   voteRematch(role) {
     if (!this.chess.game_over() || !this.playersReady || !['host','guest'].includes(role)) return;
+    this.rematchDeclined=false;
     if (!this.rematchVotes.includes(role)) this.rematchVotes.push(role);
     if (this.rematchVotes.length === 2) {
       this.round++; this.moves=[]; this.chess=new this.Chess(); this.rematchVotes=[];

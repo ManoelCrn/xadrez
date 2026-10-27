@@ -1,6 +1,7 @@
-import { createSupermarket } from "./supermarket.js?v=8";
-import { setupOnline } from "./online-ui.js?v=8";
-import { setupVR } from "./vr.js?v=8";
+import { confirmGame } from "./dialogs.js?v=13";
+import { createSupermarket } from "./supermarket.js?v=11";
+import { setupOnline } from "./online-ui.js?v=14";
+import { setupVR } from "./vr.js?v=14";
 import * as THREE from "three";
 import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -31,6 +32,19 @@ let BlackStorage=[];
 let WhiteStorage=[];
 const Socials=[]
 
+let gameEpoch = 0;
+const gameTasks = new Set();
+function scheduleGameTask(callback, delay) {
+  const epoch=gameEpoch;
+  const id=globalThis.setTimeout(()=>{gameTasks.delete(id);if(epoch===gameEpoch)callback();},delay);
+  gameTasks.add(id);return id;
+}
+function cancelGameTasks() {
+  gameEpoch++;
+  for(const id of gameTasks)clearTimeout(id);
+  gameTasks.clear();
+}
+
 let botMode=0;
 let online = null, vr = null;
 let onlineTemplates = null;
@@ -46,10 +60,10 @@ function initializeScene() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x7692e7);
   container.appendChild(renderer.domElement);
-  const ambient = new THREE.AmbientLight(0xFFE4B6, 0.5);
+  const ambient = new THREE.AmbientLight(0xf1f2e8, 0.3);
   scene.add(ambient);
 
-  const dirLight = new THREE.DirectionalLight(0xFFE4B6, 1); 
+  const dirLight = new THREE.DirectionalLight(0xfff0d9, 1.25); 
   dirLight.position.set(18.130, 15.780, 17.951);
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   dirLight.castShadow = !isMobile;
@@ -66,7 +80,7 @@ function initializeCamera() {
     0.02,
     100
   );
-  camera.position.set(0,2,-2);
+  camera.position.set(0,1.15,-2.15);
 }
 function initializeRenderer() {
   if (!renderer) {
@@ -74,9 +88,10 @@ function initializeRenderer() {
   }
   // Detect mobile
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-  renderer.setPixelRatio(isMobile ? 2.5 : window.devicePixelRatio);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
   renderer.setSize(Sizes.Width, Sizes.Height);
-  renderer.toneMappingExposure = 2.5;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
 }
 
 
@@ -171,11 +186,12 @@ let ques=0;
 async function smallBotMove() {
   if (online?.active) return;
   if (game.game_over()) {
-    alert('Fim de jogo!');
+    showLocalGameOver();
     return;
   }
+  const epoch = gameEpoch, expectedFen = game.fen();
   const bestMove = await askStockfishMove();
-  if (online?.active) return;
+  if (epoch !== gameEpoch || game.fen() !== expectedFen || online?.active || !bestMove || bestMove === '(none)' || bestMove === '0000') return;
   let out =bestMove[4]
   out=((out)?out:"q")
   console.log("Bot Moved: "+bestMove)
@@ -184,11 +200,11 @@ async function smallBotMove() {
     {to: bestMove.slice(2, 4)}
   ]
   highlightMove();
-  setTimeout(() => {
+  scheduleGameTask(() => {
     PromotionCheck(bestMove.slice(0, 2), bestMove.slice(2, 4),out);
   }, 700);
 }
-const engine = new Worker("stockfish/stockfish.js");
+let engine = new Worker("stockfish/stockfish.js");
 
 
 
@@ -210,21 +226,8 @@ function askStockfishMove() {
 
 
 function TurnDisplay(turn){
-  if(turn==-1 || botMode==3){
-    TurnDis[0].position.y=TurnDis[0].userData.MainPosition.y;
-    TurnDis[1].position.y=TurnDis[1].userData.MainPosition.y;
-    return;
-  }
-  gsap.to(TurnDis[(turn)%2].position, {
-    y: TurnDis[(turn)%2].userData.MainPosition.y+0.01,
-    duration: .2,
-    ease: "power2.inOut"
-  });
-  gsap.to(TurnDis[(turn+1)%2].position, {
-    y: TurnDis[(turn+1)%2].userData.MainPosition.y,
-    duration: .2,
-    ease: "power2.inOut"
-  });
+  const indicators=scene.getObjectByName('Supermercado')?.userData.turnIndicators || [];
+  indicators.forEach((badge,i)=>{badge.visible=turn===i && botMode!==3;});
 }
 function colorCheck(obj,color){
   let Theobj=null
@@ -612,7 +615,7 @@ function MoveTo(from,To,promoPiece){
         
     }
     if(!game.game_over()){
-      setTimeout(()=>{
+      scheduleGameTask(()=>{
         TurnDisplay((game.turn()=='w')?0:1)
         gamepause=false;
         botChecker()
@@ -624,7 +627,7 @@ function MoveTo(from,To,promoPiece){
     gamepause=false
   }
   if (game.game_over()) {
-    setTimeout(()=>{
+    scheduleGameTask(()=>{
       showLocalGameOver();
       document.getElementById("celebrate").classList.add("active")
     },1000)
@@ -639,11 +642,11 @@ function MoveTo(from,To,promoPiece){
 function botChecker(){
   if (online?.active) return;
   if(botMode==3){
-    setTimeout(smallBotMove,500)
+    scheduleGameTask(smallBotMove,500)
   }else if(botMode==1 && (game.turn()=='w')){
-    setTimeout(smallBotMove,500)
+    scheduleGameTask(smallBotMove,500)
   }else if(botMode==2 && (game.turn()=='b')){
-    setTimeout(smallBotMove,500)
+    scheduleGameTask(smallBotMove,500)
   }
 }
 function WinnerShowCase(){
@@ -665,7 +668,7 @@ function WinnerShowCase(){
         removePiece(ele,800)
       }
     })
-    setTimeout(()=>{
+    scheduleGameTask(()=>{
       SingleWinner(ChessPieces,Squares)
     },1000)
   }else{
@@ -716,7 +719,7 @@ function SingleWinner(WinnerPieces, Squares) {
         delay:.6,
         ease: "back.inOut",
       });
-      setTimeout(()=>{
+      scheduleGameTask(()=>{
         let angle = i * step;       
 
         gsap.to({}, {
@@ -807,7 +810,7 @@ function drawShowCase(WinnerPieces, Squares) {
         delay:.6,
         ease: "back.inOut",
       });
-      setTimeout(()=>{
+      scheduleGameTask(()=>{
         let angle = i * step;       
 
         gsap.to({}, {
@@ -955,7 +958,7 @@ function removePiece(theObj,delay){
   }
   
   // theObj.position.copy(ToSquare.userData.MainPosition);
-  setTimeout(()=>{
+  scheduleGameTask(()=>{
     if(newPosition){
       theObj.position.copy(newPosition.position);
     }
@@ -1241,8 +1244,8 @@ function load3D() {
           
         });
         createSupermarket(scene, model);
-        // setTimeout(makeBotMove, 1000);
-        setTimeout(()=>{TurnDisplay(0)}, 1000);
+        // scheduleGameTask(makeBotMove, 1000);
+        scheduleGameTask(()=>{TurnDisplay(0)}, 1000);
         if (texturesToLoad === 0) {
           renderer.compile(scene, camera);
           renderer.setAnimationLoop(animate);
@@ -1335,6 +1338,7 @@ function load3D() {
 }
 
 function Start3DPage() {
+  cachePieceTemplates();
   if (!vr) vr = setupVR({ renderer, scene, camera, controls, targets: targetObjects,
     canPlay: () => !gamepause && (!online?.active || online.canMove()),
     select: obj => {
@@ -1362,9 +1366,7 @@ function Start3DPage() {
     hasMoves: () => game.history().length > 0,
     status: message => vr?.status(message)
   });
-  document.getElementById(
-    "LoadInnerText"
-  ).innerHTML = `<div><button class="btn" onclick="active()"><i class="animation"></i>Iniciar<i class="animation"></i></button></div>`;
+  window.ShowMainMenu();
   const replayUrl = new URL(window.location.href);
   const replayMode = replayUrl.searchParams.get('replay');
   if (replayMode !== null) {
@@ -1380,6 +1382,7 @@ function setBotMode(Mode){
   if (online?.active) return;
   window.dispatchEvent(new Event("chess:mode-selected"));
   botMode=Mode
+  if(!renderer.xr.isPresenting){camera.position.set(0,1.15,Mode===1?2.15:-2.15);controls.update();}
   if(Mode==3){
     TurnDisplay(-1)
   }else if(Mode==1){
@@ -1388,11 +1391,54 @@ function setBotMode(Mode){
       ele.rotation.y+=Math.PI
     })
   }
-  setTimeout(botChecker,1000)
+  scheduleGameTask(botChecker,1000)
 }
-function ReloadGame(){
-  if(confirm("Tem certeza de que deseja reiniciar a partida?")){
-    window.location.reload()
+async function ReturnToMainMenu() {
+  const message=online?.active
+    ? 'Você sairá da sala online e voltará ao menu principal.'
+    : 'A partida atual será encerrada. Deseja voltar ao menu principal?';
+  if(!await confirmGame(message,{title:'Voltar ao menu principal?',accept:'Voltar ao menu'}))return;
+  cancelGameTasks();
+  if(online?.active)online.stop();
+  if(renderer.xr.isPresenting)await renderer.xr.getSession().end();
+  const url=new URL(window.location.href);url.searchParams.delete('replay');
+  history.replaceState(null,'',url);
+  window.location.reload();
+}
+window.ReturnToMainMenu=ReturnToMainMenu;
+
+async function ReloadGame(){
+  if (online?.active) {
+    if (online.chess.game_over()) online.requestRematch();
+    else await confirmGame('Para reiniciar uma partida online, encerre a partida ou saia da sala e crie uma nova.', {title:'Partida online',accept:'Entendi'});
+    return;
+  }
+  if(await confirmGame('As jogadas atuais serão apagadas e as peças voltarão às posições iniciais.',{title:'Reiniciar partida?',accept:'Reiniciar'})) restartLocalGame();
+}
+function restartLocalGame() {
+  if(online?.active)return;
+  const mode=botMode;
+  cancelGameTasks();
+  engine.terminate();engine=new Worker('stockfish/stockfish.js');
+  scene.traverse(obj=>{gsap.killTweensOf(obj.position);gsap.killTweensOf(obj.rotation);gsap.killTweensOf(obj.scale);if(obj.material?.color)gsap.killTweensOf(obj.material.color);});
+  const position=camera.position.clone(),quaternion=camera.quaternion.clone();
+  Blackout=0;Whiteout=0;MainController=true;HoveredObject=null;currentIntersects=[];
+  document.getElementById('local-game-over')?.remove();
+  restoreOnlineBoard([], {chess:new Chess(),role:'local'});
+  botMode=mode;
+  camera.position.copy(position);camera.quaternion.copy(quaternion);if(!renderer.xr.isPresenting)controls.update();
+  TurnDisplay(mode===3?-1:0);
+  vr?.status('Nova partida. Vez das brancas.');
+  window.dispatchEvent(new Event('chess:mode-selected'));
+  scheduleGameTask(botChecker,300);
+}
+function cachePieceTemplates() {
+  if(onlineTemplates)return;
+  onlineTemplates={};
+  for(const [key,source] of Object.entries(DiffPieces)) {
+    const template=source.clone(true);
+    template.traverse(child=>{if(child.isMesh)child.material=child.material.clone();});
+    onlineTemplates[key]={template,parent:source.parent};
   }
 }
 function CameraTop() {
@@ -1423,14 +1469,8 @@ window.ReloadGame=ReloadGame
 
 
 function restoreOnlineBoard(moves, match) {
-  if (!onlineTemplates) {
-    onlineTemplates = {};
-    for (const [key, source] of Object.entries(DiffPieces)) {
-      const template = source.clone(true);
-      template.traverse(child => { if (child.isMesh) child.material = child.material.clone(); });
-      onlineTemplates[key] = { template, parent: source.parent };
-    }
-  }
+  cancelGameTasks();
+  cachePieceTemplates();
   clearSelectPiece();
   for (const square of Object.values(Squares)) {
     gsap.killTweensOf(square.position);
@@ -1443,6 +1483,7 @@ function restoreOnlineBoard(moves, match) {
   document.getElementById('promosion').replaceChildren();
   document.getElementById('celebrate').classList.remove('active');
   document.getElementById('LoadingBox').classList.add('Open');
+  document.body.classList.remove('menu-active');
   const oldPieces = [];
   scene.traverse(obj => { if (obj.name.includes('Piece') && obj.userData.NowAt) oldPieces.push(obj); });
   for (const piece of oldPieces) {
@@ -1467,6 +1508,7 @@ function restoreOnlineBoard(moves, match) {
     piece.name = color + '-Piece_' + names[square.type] + '_' + square.square;
     parent.add(piece); piece.position.copy(Squares[square.square].userData.MainPosition); piece.scale.set(1,1,1);
     saveOriginalTransform(piece); ChessPieces.push(piece); targetObjects.push(piece);
+    DiffPieces[color + '_' + names[square.type]] = piece;
   }
   document.body.classList.toggle('spectator-mode', match.role === 'spectator');
   if (match.role === 'spectator' && !spectatorCameraSet && !renderer.xr.isPresenting) {
@@ -1503,11 +1545,7 @@ function showLocalGameOver() {
     </div>
   </div>`;
   panel.querySelector('h2').textContent = title;
-  panel.querySelector('#local-replay').onclick = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('replay', String(botMode));
-    window.location.replace(url.href);
-  };
+  panel.querySelector('#local-replay').onclick = restartLocalGame;
   panel.querySelector('#local-menu').onclick = () => {
     const url = new URL(window.location.href);
     url.searchParams.delete('replay');

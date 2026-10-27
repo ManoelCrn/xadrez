@@ -50,3 +50,9 @@ As licenças das dependências estão em `build/`. Modelos e demais recursos man
 - Botões de fim de partida disponíveis no VR pelo gatilho.
 
 Para atualizar uma cópia já ligada ao GitHub, copie o conteúdo desta pasta sobre a pasta do seu projeto, preservando a pasta .git existente. Não é necessário recriar o repositório.
+
+## Revisão da loja
+A loja foi reconstruída com fachada e portas transparentes, gôndolas duplas formando corredores, refrigeradores, hortifrúti e caixas com esteira. A área de convivência usa móveis leves de madeira e metal. O cenário foi aberto e inspecionado no Chromium em três ângulos. A validação no Meta Quest continua necessária, especialmente para fluidez e escala em VR.
+
+## Reinício de partida
+Jogar novamente reconstrói o tabuleiro sem recarregar a página, preservando o modo de jogo e a cor contra o computador. O reinício cancela animações e tarefas pendentes, limpa capturas e promoção e restaura as 32 peças. Alertas e confirmações nativas foram substituídos por diálogos internos, com opções acessíveis pelos controles no VR. A revanche online continua dependendo da confirmação dos dois jogadores.

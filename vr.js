@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { VRButton } from './jsm/webxr/VRButton.js?v=6';
+import { VRButton } from './jsm/webxr/VRButton.js?v=12';
 export function setupVR({ renderer, scene, camera, controls, targets, select, boardCenter, canPlay, promote }) {
   renderer.xr.enabled = true;
   renderer.xr.setReferenceSpaceType('local-floor');
@@ -42,7 +42,7 @@ export function setupVR({ renderer, scene, camera, controls, targets, select, bo
     const canvas=document.createElement('canvas'); canvas.width=512;canvas.height=128;
     const c=canvas.getContext('2d');c.fillStyle=i?'#26455b':'#126859';c.fillRect(0,0,512,128);c.fillStyle='white';c.font='bold 36px sans-serif';c.textAlign='center';c.fillText(label,256,78);
     const mesh=new THREE.Mesh(new THREE.PlaneGeometry(.34,.085),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(canvas),depthTest:false}));
-    mesh.position.x=(i-.5)*.37;mesh.userData.endAction=i;mesh.renderOrder=102;endGroup.add(mesh);endTargets.push(mesh);
+    mesh.position.x=(i-.5)*.37;mesh.userData.endAction=i;mesh.userData.canvas=canvas;mesh.userData.label=label;mesh.renderOrder=102;endGroup.add(mesh);endTargets.push(mesh);
   });
   endGroup.visible=false;
   function hit(controller) {
@@ -59,10 +59,10 @@ export function setupVR({ renderer, scene, camera, controls, targets, select, bo
     controller.addEventListener('selectstart', () => {
       if (endGroup.visible) {
         const hitResult=hit(controller); if(!hitResult)return;
-        const panel=document.getElementById('online-game-over') || document.getElementById('local-game-over');
-        const selector=hitResult.object.userData.endAction===0 ? '#local-replay, [data-action="replay"]' : '#local-menu, [data-action="menu"]';
-        const button=panel?.querySelector(selector);if(button && !button.hidden && !button.disabled) {
-          if(hitResult.object.userData.endAction===1) renderer.xr.getSession()?.end();
+        const panel=document.getElementById('game-confirm') || document.getElementById('online-game-over') || document.getElementById('local-game-over');
+        const selector=hitResult.object.userData.endAction===0 ? '#local-replay, [data-action="replay"], [data-confirm="accept"]' : '#local-menu, [data-action="menu"], [data-confirm="cancel"]';
+        const button=hitResult.object.userData.domButton || panel?.querySelector(selector);if(button && !button.hidden && !button.disabled) {
+          if(button.matches('#local-menu, [data-action="menu"]')) renderer.xr.getSession()?.end();
           button.click();
         }
         return;
@@ -89,10 +89,19 @@ export function setupVR({ renderer, scene, camera, controls, targets, select, bo
   });
   return { status: writeStatus, update() {
     if (!renderer.xr.isPresenting) return;
-    const endPanel=document.getElementById('online-game-over') || document.getElementById('local-game-over');
+    const endPanel=document.getElementById('game-confirm') || document.getElementById('online-game-over') || document.getElementById('local-game-over');
     endGroup.visible=!!endPanel;
     if(endPanel) {
-      const title=endPanel.querySelector('h2')?.textContent;
+      const actions=[...endPanel.querySelectorAll('.game-over-actions button')].filter(b=>!b.hidden);
+      const incoming=endPanel.querySelector('[data-action="decline"]:not([hidden])');
+      const buttons=incoming?[endPanel.querySelector('[data-action="replay"]'),incoming]:actions;
+      endTargets.forEach((mesh,i)=>{
+        mesh.userData.domButton=buttons[i];
+        const text=buttons[i]?.textContent || (i?'Cancelar':'Continuar');
+        if(mesh.userData.label===text)return;
+        mesh.userData.label=text;const c=mesh.userData.canvas.getContext('2d');c.fillStyle=i?'#26455b':'#126859';c.fillRect(0,0,512,128);c.fillStyle='white';c.font='bold 30px sans-serif';c.textAlign='center';c.fillText(text,256,78,490);mesh.material.map.needsUpdate=true;
+      });
+      const title=endPanel.querySelector('h2')?.textContent + (endPanel.id==='game-confirm'?' '+endPanel.querySelector('p').textContent:'');
       if(title && status!==title)writeStatus(title);
     }
     promotionGroup.visible = !endGroup.visible && document.getElementById('promosion').classList.contains('promot');

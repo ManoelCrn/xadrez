@@ -182,3 +182,23 @@ test('rematch needs both players and resets players and spectator together', asy
     assert.equal(g.chess.fen(),h.chess.fen());assert.equal(spectator.chess.fen(),h.chess.fen());
   } finally {h.stop();g.stop();spectator.stop();}
 });
+
+test('either player may challenge; recipient can decline without resetting board or closing room', async () => {
+  const [h,g]=await pair();const spectator=create();
+  try {
+    await spectator.start('spectator','12345678');await tick();await tick();
+    for(const [p,from,to] of [[h,'f2','f3'],[g,'e7','e5'],[h,'g2','g4'],[g,'d8','h4']]){p.submit({from,to});await tick();}
+    const finalFen=h.chess.fen();
+    h.requestRematch();await tick();
+    assert.equal(h.declineRematch(),false);assert.equal(spectator.declineRematch(),false);
+    // Spectators cannot forge a refusal on behalf of either player.
+    spectator.connection.send({type:'rematch-decline',id:h.id,round:h.round});await tick();assert.deepEqual(h.rematchVotes,['host']);
+    assert.equal(g.declineRematch(),true);await tick();
+    for(const p of [h,g,spectator]){assert.equal(p.chess.fen(),finalFen);assert.equal(p.connected,true);assert.deepEqual(p.rematchVotes,[]);assert.equal(p.rematchDeclined,true);}
+    g.requestRematch();await tick();assert.deepEqual(h.rematchVotes,['guest']);
+    assert.equal(h.declineRematch(),true);await tick();assert.equal(g.chess.fen(),finalFen);
+    g.requestRematch();await tick();h.requestRematch();await tick();await tick();
+    for(const p of [h,g,spectator]){assert.equal(p.moves.length,0);assert.equal(p.rematchDeclined,false);assert.equal(p.round,1);}
+    assert.equal(h.code,'12345678');assert.equal(g.code,h.code);
+  }finally{h.stop();g.stop();spectator.stop();}
+});

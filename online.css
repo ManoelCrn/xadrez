@@ -65,3 +65,69 @@
 #local-game-over .game-over-card, #online-game-over .game-over-card {width:min(560px,100%); border:2px solid #e6bd62;}
 #local-game-over button, #online-game-over button {min-height:52px;}
 #online-game-over button:disabled {opacity:.6;cursor:wait;}
+
+#game-confirm { position: fixed; inset: 0; z-index: 10003; display: flex; align-items: center; justify-content: center; padding: 16px; background: #0009; box-sizing: border-box; font: 16px/1.5 system-ui, sans-serif; color: #eef5ff; }
+#game-confirm .game-over-card { width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px; box-sizing: border-box; background: #071b32; border: 1px solid #7296ba; border-radius: 14px; box-shadow: 0 8px 32px #0005; }
+#game-confirm h2 { margin: 0 0 12px; font: 700 24px/1.3 system-ui, sans-serif; }
+#game-confirm p { margin: 0 0 20px; font: 16px/1.5 system-ui, sans-serif; text-shadow: none; text-align: left; }
+#game-confirm .game-over-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+#game-confirm button { position: static; width: auto; min-height: 44px; padding: 10px 14px; border: 1px solid #7296ba; border-radius: 7px; color: white; background: #204d78; font: 600 15px/1.4 system-ui, sans-serif; cursor: pointer; }
+#game-confirm #local-replay { background: #16735c; }
+#game-confirm button[hidden] { display: none; }
+#game-confirm.game-over-compact { inset: auto 0 64px; padding: 8px; background: transparent; pointer-events: none; }
+#game-confirm.game-over-compact .game-over-card { width: auto; padding: 12px; pointer-events: auto; }
+#game-confirm.game-over-compact h2, #game-confirm.game-over-compact p { display: none; }
+
+
+#game-confirm { z-index:10010; }
+
+/* Main game controls stay together and clear of the online panel. */
+.HomeMenu { position:absolute; top:1.4rem; left:140px; z-index:999; display:flex; align-items:center; justify-content:center; gap:8px; height:3.5rem; padding:0 14px; border:2px solid white; border-radius:10px; background:#000; color:white; font:600 14px system-ui,sans-serif; cursor:pointer; box-sizing:border-box; }
+.HomeMenu:hover { background:#1c3930; }
+.HomeMenu:focus-visible { outline:3px solid #efc969; outline-offset:3px; }
+.in-vr .HomeMenu { display:none; }
+@media(max-width:700px) { #online-panel { top:88px; max-height:calc(100dvh - 160px); } }
+
+/* Opening screen: the live store is the artwork, without another image download. */
+#LoadingBox.market-menu { z-index:100; display:flex; align-items:flex-start; justify-content:center !important; padding:clamp(24px,5vw,72px); background:#102b25; color:#f8f5e9; font-family:system-ui,sans-serif; overflow-y:auto; }
+#LoadingBox.market-menu.ready { background:linear-gradient(90deg,rgba(9,29,24,.98) 0%,rgba(9,29,24,.94) 30%,rgba(9,29,24,.75) 45%,rgba(9,29,24,.12) 75%); }
+#LoadingBox.market-menu.Open { display:none; animation:none; }
+#LoadingBox .menu-shell { display:flex; align-items:stretch; justify-content:center; gap:24px; width:min(420px,44vw); min-height:100%; flex-shrink:0; }
+.menu-brand { text-align:left; }
+.menu-eyebrow { display:flex; align-items:center; gap:12px; font-size:11px; font-weight:700; letter-spacing:2.5px; color:#d6cba6; }
+.menu-symbol { display:grid; place-content:center; width:38px; height:38px; border:1px solid #9fb5a055; border-radius:9px; font-size:28px; letter-spacing:0; }
+#LoadingBox h1 { margin:24px 0 16px; font:650 clamp(38px,5vw,72px)/1.04 system-ui,sans-serif; letter-spacing:-2.8px; color:#fffdf2; }
+#LoadingBox h1 span { color:#d9c28b; }
+#LoadingBox .menu-brand p { padding:0; margin:0; color:#c5d0c7; font:400 16px/1.5 system-ui,sans-serif; text-align:left; text-shadow:none; }
+.menu-platforms { display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; }
+.menu-platforms span { border:1px solid #b4c7b633; padding:6px 8px; border-radius:4px; color:#aebfb3; font-size:9px; font-weight:600; letter-spacing:1px; }
+#LoadingBox #LoadInnerText { display:flex; flex-direction:column; align-items:stretch; gap:10px; width:100%; }
+#LoadInnerText button { position:static; margin:0; box-sizing:border-box; width:100%; min-height:48px; border-radius:8px; padding:13px 18px; font:600 15px/1.35 system-ui,sans-serif; text-transform:none; letter-spacing:0; cursor:pointer; transition:background .15s; box-shadow:none; }
+#LoadInnerText .menu-primary { display:flex; justify-content:space-between; align-items:center; color:#18382c; background:#dfcc98; border:1px solid #dfcc98; }
+#LoadInnerText .menu-primary:hover { background:#edddb4; }
+#LoadInnerText .menu-secondary { color:#f5f3e8; background:#ffffff08; border:1px solid #a7bdae55; }
+#LoadInnerText .menu-choice { display:flex; flex-direction:column; align-items:flex-start; gap:4px; color:#fbf9ef; background:#ffffff08; border:1px solid #a7bdae44; text-align:left; }
+#LoadInnerText .menu-choice span { color:#b8c8bd; font-weight:400; font-size:12px; }
+#LoadInnerText .menu-choice:hover,#LoadInnerText .menu-secondary:hover { background:#ffffff16; }
+#LoadInnerText .menu-back,#LoadInnerText .menu-text { border:0; background:transparent; color:#b8c8bd; min-height:36px; padding:8px 0; text-align:left; font-size:13px; }
+#LoadInnerText .loadButton { color:#c4d0c5; border:1px solid #a7bdae44; background:transparent; cursor:wait; }
+#LoadInnerText button:focus-visible { outline:3px solid #dfcc98; outline-offset:3px; }
+#LoadingBox .menu-section-title { margin:0 0 4px; font:600 17px/1.3 system-ui,sans-serif; }
+#LoadingBox .menu-description { margin:0; padding:0; text-align:left; text-shadow:none; color:#c4d0c5; font:400 14px/1.6 system-ui,sans-serif; }
+#LoadingBox .menu-footer { border-top:1px solid #a7bdae22; padding-top:16px; }
+#LoadingBox .facts { min-height:34px; margin:0; padding:0; background:none; text-align:left; color:#a9b8ad; font:400 11px/1.5 system-ui,sans-serif; text-shadow:none !important; }
+#LoadingBox #fingers { margin:10px 0 0; padding:0; text-align:left; color:#8fa698; text-shadow:none; font:400 11px/1.5 system-ui,sans-serif; }
+.menu-active .Reset,.menu-active .ViewPoint,.menu-active .HomeMenu,.menu-active #enter-vr { display:none !important; }
+@media(max-width:700px) {
+ #LoadingBox.market-menu { padding:92px 24px 24px; }
+ #LoadingBox.market-menu.ready { background:linear-gradient(90deg,#102b25f7,#102b25d9); }
+ #LoadingBox .menu-shell { width:min(420px,100%); min-height:0; gap:20px; }
+ #LoadingBox h1 { font-size:46px; margin-top:18px; }
+ .menu-active #online-panel { top:8px; }
+}
+@media(max-height:650px) and (min-width:701px) {
+ #LoadingBox.market-menu { padding:24px 40px; }
+ #LoadingBox .menu-shell { gap:14px; }
+ #LoadingBox h1 { font-size:44px; margin:14px 0 10px; }
+ .menu-platforms { margin-top:12px; }
+}

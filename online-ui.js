@@ -1,4 +1,5 @@
-import { OnlineMatch, createPeer } from './multiplayer.js?v=6';
+import { confirmGame } from "./dialogs.js?v=13";
+import { OnlineMatch, createPeer } from './multiplayer.js?v=14';
 export function setupOnline(adapter) {
   const panel = document.createElement('section');
   panel.id = 'online-panel';
@@ -35,17 +36,26 @@ export function setupOnline(adapter) {
       if (!end) {
         end = document.createElement('section'); end.id='online-game-over'; end.className='end-dialog';
         end.setAttribute('role','dialog'); end.setAttribute('aria-modal','true');
-        end.innerHTML='<div class="game-over-card"><h2></h2><p></p><div class="game-over-actions"><button data-action="replay">Jogar novamente</button><button data-action="menu">Sair da sala / Menu</button><button data-action="board">Ver tabuleiro</button></div></div>';
+        end.innerHTML='<div class="game-over-card"><h2></h2><p></p><div class="game-over-actions"><button data-action="replay">Jogar novamente</button><button data-action="decline" hidden>Recusar revanche</button><button data-action="menu">Sair da sala / Menu</button><button data-action="board">Ver tabuleiro</button></div></div>';
         document.body.append(end);
         end.querySelector('[data-action="replay"]').onclick=()=>match.requestRematch();
+        end.querySelector('[data-action="decline"]').onclick=()=>match.declineRematch();
         end.querySelector('[data-action="menu"]').onclick=()=>{match.stop();location.reload();};
         end.querySelector('[data-action="board"]').onclick=()=>end.classList.add('game-over-compact');
       }
       end.querySelector('h2').textContent=match.chess.in_checkmate() ? `XEQUE-MATE! ${match.chess.turn()==='w'?'Pretas':'Brancas'} venceram.` : 'EMPATE — partida encerrada';
-      end.querySelector('p').textContent=match.role==='spectator'?'Aguardando a decisão dos jogadores.':'Para a revanche, os dois jogadores precisam clicar em Jogar novamente.';
+      const ownRequest=match.rematchVotes?.includes(match.role);
+      const incoming=match.role!=='spectator' && match.rematchVotes?.length===1 && !ownRequest;
+      end.querySelector('p').textContent=match.role==='spectator'?'Aguardando a decisão dos jogadores.'
+        : incoming?'O adversário desafiou você para uma revanche. Aceita jogar novamente?'
+        : ownRequest?'Desafio enviado. Aguardando o adversário aceitar ou recusar.'
+        : match.rematchDeclined?'A revanche foi recusada. O tabuleiro foi mantido e a sala continua aberta.'
+        : 'Convide o adversário para uma revanche na mesma sala.';
       const replay=end.querySelector('[data-action="replay"]');
-      replay.hidden=match.role==='spectator'; replay.disabled=match.rematchVotes?.includes(match.role);
-      replay.textContent=replay.disabled?'Aguardando adversário…':'Jogar novamente';
+      replay.hidden=match.role==='spectator'; replay.disabled=!!ownRequest;
+      replay.textContent=ownRequest?'Aguardando resposta…':incoming?'Aceitar revanche':'Jogar novamente';
+      end.querySelector('[data-action="decline"]').hidden=!incoming;
+      if(incoming){end.classList.remove('game-over-compact');end.setAttribute('aria-modal','true');}
     } else end?.remove();
     el('create').disabled = el('join').disabled = el('watch').disabled = match.active;
     el('fullscreen').hidden = !match.active || match.role !== 'spectator';
@@ -63,7 +73,7 @@ export function setupOnline(adapter) {
   };
   match = new OnlineMatch({ Chess: globalThis.Chess, peerFactory: createPeer, onState: render, onBoard: (moves, meta) => adapter.board(moves, match, meta) });
   async function start(role, resume = false) {
-    if (!resume && adapter.hasMoves() && !confirm('Iniciar uma sala encerra a partida local atual. Continuar?')) return;
+    if (!resume && adapter.hasMoves() && !await confirmGame('Iniciar uma sala encerra a partida local atual. Continuar?', {title:'Entrar no modo online'})) return;
     try { await match.start(role, el('code').value.trim(), resume); }
     catch (err) { match.status(err.message); }
   }
@@ -80,7 +90,7 @@ export function setupOnline(adapter) {
   el('code').onkeydown = event => { if (event.key === 'Enter') start('guest'); };
   el('resume').onclick = () => { const saved = match.saved(); if (saved) start(saved.role, true); };
   el('copy').onclick = async () => { try { await navigator.clipboard.writeText(match.code); } catch { el('status').textContent = `Código da sala: ${match.code}`; } };
-  el('exit').onclick = () => { if (confirm('Sair da sala e voltar ao menu?')) { match.stop(); location.reload(); } };
+  el('exit').onclick = async () => { if (await confirmGame('Você será desconectado desta sala.', {title:'Sair da sala?',accept:'Sair e voltar ao menu'})) { match.stop(); location.reload(); } };
   render();
   return match;
 }
