@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
-    <title>3D Chess Game</title>
+    <title>Xadrez 3D — PC e VR</title>
     <meta charset="utf-8" />
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
     <meta property="og:image" content="assets/favicon.ico">
-    <meta name="description" content="A fully interactive 3D Chess Game built using Three.js and GSAP, featuring lifelike 3D chess pieces and smooth animations. The game is powered by chess.js for accurate chess rules and move validation, allowing players to enjoy a realistic chess experience directly in the browser.">
-    <meta property="og:title" content="3D Chess game">
-    <meta property="og:description" content="A fully interactive 3D Chess Game built using Three.js and GSAP, featuring lifelike 3D chess pieces and smooth animations. The game is powered by chess.js for accurate chess rules and move validation, allowing players to enjoy a realistic chess experience directly in the browser.">
+    <meta name="description" content="Jogo de xadrez 3D para computador e realidade virtual, com partidas locais, contra o computador e online, além de modo espectador.">
+    <meta property="og:title" content="Xadrez 3D — PC e VR">
+    <meta property="og:description" content="Jogo de xadrez 3D para computador e realidade virtual, com partidas locais, contra o computador e online, além de modo espectador.">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="assets/Logo192x192.png">
 
@@ -16,7 +16,7 @@
       content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
     />
     <link type="text/css" rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="online.css?v=4" />
+    <link rel="stylesheet" href="online.css?v=5" />
     <style>
       body {
         background-color: #02184a;
@@ -37,11 +37,11 @@
       <ion-icon name="refresh-outline"></ion-icon>
     </button>
     <div id="LoadingBox">
-      <p style="opacity: 0">Loader Text</p>
+      <p style="opacity: 0">Carregando o jogo</p>
       <p class="facts active none" style="opacity: 0;" id="factstemp">...</p>
       <div id="LoadInnerText">
         <div>
-          <button class="loadButton">Loading...</button>
+          <button class="loadButton">Carregando...</button>
         </div>
       </div>
       <p id="facts" class="facts"></p>
@@ -50,7 +50,7 @@
     <div id="container"></div>
 
     <div id="celebrate">
-      <button onclick="WinnerShowCase()">Celebrate</button>
+      <button onclick="WinnerShowCase()">Comemorar</button>
     </div>
 
     <div id="promosion" >
@@ -65,8 +65,8 @@
         document.getElementById("LoadingBox").innerHTML=`
           <div>
             <div><button class="btn options" onclick="ModeSet(0)"><i class="animation"></i>2 jogadores locais<i class="animation"></i></button></div>
-            <div><button class="btn options" onclick="VsBot()"><i class="animation"></i>You Vs Bot<i class="animation"></i></button></div>
-            <div><button class="btn options" onclick="ModeSet(3)"><i class="animation"></i>View Only<i class="animation"></i></button></div>
+            <div><button class="btn options" onclick="VsBot()"><i class="animation"></i>Jogar contra o computador<i class="animation"></i></button></div>
+            <div><button class="btn options" onclick="ModeSet(3)"><i class="animation"></i>Assistir ao computador<i class="animation"></i></button></div>
           </div>`;
       }
       function ModeSet(Mode){
@@ -79,9 +79,9 @@
       function VsBot(){
         document.getElementById("LoadingBox").innerHTML=`
           <div>
-            <p style="margin: 0;background-color: rgba(0, 0, 0, 0.596);border-radius: 10px;">Play us</p>
-            <div><button class="btn options" onclick="ModeSet(2)" style="color: black;background-color: white;"><i class=""></i>White<i class=""></i></button></div>
-            <div><button class="btn options" onclick="ModeSet(1)"><i class=""></i>Black<i class=""></i></button></div>
+            <p style="margin: 0;background-color: rgba(0, 0, 0, 0.596);border-radius: 10px;">Escolha a cor das suas peças</p>
+            <div><button class="btn options" onclick="ModeSet(2)" style="color: black;background-color: white;"><i class=""></i>Brancas<i class=""></i></button></div>
+            <div><button class="btn options" onclick="ModeSet(1)"><i class=""></i>Pretas<i class=""></i></button></div>
           </div>`
       }
 
@@ -89,35 +89,35 @@
         const instruction = document.getElementById("fingers");
 
         if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
-          instruction.textContent = "Use 2 fingers to navigate";
+          instruction.textContent = "Use dois dedos para movimentar a câmera";
         } else {
-          instruction.textContent = "Use mouse to navigate";
+          instruction.textContent = "Use o mouse para movimentar a câmera";
         }
         load3D();
         // active()
       }); 
       const facts = [
-        "The longest official chess game lasted 269 moves.",
-        "The word 'checkmate' comes from Persian 'shah mat' – 'the king is dead'.",
-        "In 1989, a computer beat a human master for the first time.",
-        "The second book ever printed in English was about chess.",
-        "There are more possible chess games than atoms in the universe.",
-        "Bobby Fischer once played 50 simultaneous games – and won them all.",
-        "The first mechanical chess clock was invented in 1883.",
-        "A knight on the rim is considered dim – harder to use effectively.",
-        "In 2003, Kasparov drew against the chess computer 'Deep Junior'.",
-        "The first computer to beat a world champion was Deep Blue in 1997.",
-        "Blindfold chess masters can play dozens of games without seeing boards.",
-        "The longest possible game under 50-move rule is 5949 moves.",
-        "Pawn promotion doesn’t have to be a queen – it can be any piece.",
-        "Castling was introduced in the 1500s to speed up the game.",
-        "In 1924, the International Chess Federation (FIDE) was founded.",
-        "World champion Emanuel Lasker held his title for 27 years.",
-        "You can checkmate with just two bishops and a king.",
-        "The knight’s tour puzzle is over 1000 years old.",
-        "Chess boxing is a real sport – alternating rounds of chess and boxing.",
-        "In 1972, the Fischer-Spassky match was called the 'Match of the Century'."
-      ];
+        "A partida oficial de xadrez mais longa durou 269 lances.",
+        "O objetivo do xadrez é dar xeque-mate no rei adversário.",
+        "As brancas sempre fazem o primeiro lance.",
+        "O tabuleiro possui 64 casas, organizadas em oito linhas e oito colunas.",
+        "Cada jogador começa com 16 peças.",
+        "O cavalo se movimenta em L e pode saltar outras peças.",
+        "O primeiro relógio mecânico de xadrez foi inventado em 1883.",
+        "Um cavalo no centro costuma controlar mais casas do que na borda.",
+        "A torre se movimenta em linha reta, pelas linhas e colunas.",
+        "Em 1997, o Deep Blue venceu o campeão mundial Garry Kasparov em um confronto.",
+        "O bispo se movimenta pelas diagonais.",
+        "A dama combina os movimentos da torre e do bispo.",
+        "Um peão pode ser promovido a dama, torre, bispo ou cavalo.",
+        "O roque movimenta o rei e uma torre na mesma jogada.",
+        "A Federação Internacional de Xadrez (FIDE) foi fundada em 1924.",
+        "Emanuel Lasker foi campeão mundial por 27 anos.",
+        "É possível dar xeque-mate com um rei e dois bispos contra um rei sozinho.",
+        "O rei não pode se mover para uma casa atacada.",
+        "O peão captura na diagonal e avança pela coluna.",
+        "Em 1972, o confronto entre Fischer e Spassky ficou conhecido como a Partida do Século."
+];
 
       let shuffledFacts = [...facts];
       let factIndex = 0;
@@ -163,7 +163,7 @@
       }
     </script>
 
-    <script type="module" src="main.js?v=4"></script>
+    <script type="module" src="main.js?v=5"></script>
     <script
       type="module"
       src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"

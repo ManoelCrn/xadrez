@@ -18,7 +18,7 @@ const Squares=[];
 const DiffPieces=[]
 let currentIntersects = [];
 let HoveredObject = null;
-let textureKey, game,links;
+let textureKey, game;
 let  pointer;
 let SocialAlert = 0;
 let MainController = true;
@@ -118,11 +118,7 @@ function initializeLoaders() {
     SideItems:"ktx2/NewSideItems.ktx2"
   };
 
-  links = {
-    Github: "https://github.com/mrabhin03",
-    Insta: "https://www.instagram.com/mr_abhin._",
-    Linkedin: "https://www.linkedin.com/in/mr-abhin",
-  };
+
 }
 
 function initializeEventListeners() {
@@ -174,7 +170,7 @@ let ques=0;
 async function smallBotMove() {
   if (online?.active) return;
   if (game.game_over()) {
-    alert('Game Over!');
+    alert('Fim de jogo!');
     return;
   }
   const bestMove = await askStockfishMove();
@@ -265,15 +261,6 @@ function handlePointerClick(e) {
 function selectBoardObject(obj) {
   if (obj.name.includes("shadowPlane")) obj = obj.parent;
   if (online?.active && !online.canMove()) return;
-      for (const [key, url] of Object.entries(links)) {
-        if (obj.name.includes(key)) {
-          const win = window.open();
-          if (!win) return;
-          win.opener = null;
-          win.location = url;
-          return
-        }
-      }
 
       let currentMover=(game.turn()=='w')?"White":"Black";
       if (game.game_over()) {
@@ -353,10 +340,10 @@ function PromotionCheck(from,to,pro){
       const promosObj=document.getElementById("promosion")
       promosObj.classList.add("promot")
       promosObj.innerHTML=`
-        <button data-promotion="q" onclick="savePromotion('${from}','${to}','q')">♕ Queen</button>
-        <button data-promotion="r" onclick="savePromotion('${from}','${to}','r')">♖ Rook</button>
-        <button data-promotion="b" onclick="savePromotion('${from}','${to}','b')">♗ Bishop</button>
-        <button data-promotion="n" onclick="savePromotion('${from}','${to}','n')">♘ Knight</button>`;
+        <button data-promotion="q" onclick="savePromotion('${from}','${to}','q')">♕ Dama</button>
+        <button data-promotion="r" onclick="savePromotion('${from}','${to}','r')">♖ Torre</button>
+        <button data-promotion="b" onclick="savePromotion('${from}','${to}','b')">♗ Bispo</button>
+        <button data-promotion="n" onclick="savePromotion('${from}','${to}','n')">♘ Cavalo</button>`;
     return;
   }
   return MoveTo(from,to,promoPiece);
@@ -1079,6 +1066,11 @@ function load3D() {
       (gltf) => {
         const model = gltf.scene;
         model.position.set(0, -1, 0);
+        const socialObjects = [];
+        model.traverse(child => {
+          if (/Github|Insta|Linkedin/i.test(child.name)) socialObjects.push(child);
+        });
+        socialObjects.forEach(child => child.removeFromParent());
         scene.add(model);
         model.traverse((child) => {
           if (!child.isMesh) return;
@@ -1370,7 +1362,7 @@ function Start3DPage() {
   });
   document.getElementById(
     "LoadInnerText"
-  ).innerHTML = `<div><button class="btn" onclick="active()"><i class="animation"></i>Start<i class="animation"></i></button></div>`;
+  ).innerHTML = `<div><button class="btn" onclick="active()"><i class="animation"></i>Iniciar<i class="animation"></i></button></div>`;
   const replayUrl = new URL(window.location.href);
   const replayMode = replayUrl.searchParams.get('replay');
   if (replayMode !== null) {
@@ -1397,7 +1389,7 @@ function setBotMode(Mode){
   setTimeout(botChecker,1000)
 }
 function ReloadGame(){
-  if(confirm("Are u sure you want to restart the game?")){
+  if(confirm("Tem certeza de que deseja reiniciar a partida?")){
     window.location.reload()
   }
 }
