@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>3D Chess Game</title>
+    <meta charset="utf-8" />
+    <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+    <meta property="og:image" content="assets/favicon.ico">
+    <meta name="description" content="A fully interactive 3D Chess Game built using Three.js and GSAP, featuring lifelike 3D chess pieces and smooth animations. The game is powered by chess.js for accurate chess rules and move validation, allowing players to enjoy a realistic chess experience directly in the browser.">
+    <meta property="og:title" content="3D Chess game">
+    <meta property="og:description" content="A fully interactive 3D Chess Game built using Three.js and GSAP, featuring lifelike 3D chess pieces and smooth animations. The game is powered by chess.js for accurate chess rules and move validation, allowing players to enjoy a realistic chess experience directly in the browser.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="assets/Logo192x192.png">
+
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="online.css?v=4" />
+    <style>
+      body {
+        background-color: #02184a;
+        color: #000;
+      }
+
+      a {
+        color: #2983ff;
+      }
+    </style>
+  </head>
+
+  <body>
+    <button class="ViewPoint" onclick="CameraTop()">
+      <ion-icon name="color-wand-outline"></ion-icon>
+    </button>
+    <button class="Reset" onclick="ReloadGame()">
+      <ion-icon name="refresh-outline"></ion-icon>
+    </button>
+    <div id="LoadingBox">
+      <p style="opacity: 0">Loader Text</p>
+      <p class="facts active none" style="opacity: 0;" id="factstemp">...</p>
+      <div id="LoadInnerText">
+        <div>
+          <button class="loadButton">Loading...</button>
+        </div>
+      </div>
+      <p id="facts" class="facts"></p>
+      <p id="fingers">...</p>
+    </div>
+    <div id="container"></div>
+
+    <div id="celebrate">
+      <button onclick="WinnerShowCase()">Celebrate</button>
+    </div>
+
+    <div id="promosion" >
+      
+    </div>
+
+    <div id="info"></div>
+    <script>
+      function active() {
+        stopFacts()
+        document.getElementById("LoadingBox").style.justifyContent='center';
+        document.getElementById("LoadingBox").innerHTML=`
+          <div>
+            <div><button class="btn options" onclick="ModeSet(0)"><i class="animation"></i>2 jogadores locais<i class="animation"></i></button></div>
+            <div><button class="btn options" onclick="VsBot()"><i class="animation"></i>You Vs Bot<i class="animation"></i></button></div>
+            <div><button class="btn options" onclick="ModeSet(3)"><i class="animation"></i>View Only<i class="animation"></i></button></div>
+          </div>`;
+      }
+      function ModeSet(Mode){
+        document.getElementById("LoadingBox").classList.add("Open");
+        setBotMode(Mode)
+      }
+
+
+
+      function VsBot(){
+        document.getElementById("LoadingBox").innerHTML=`
+          <div>
+            <p style="margin: 0;background-color: rgba(0, 0, 0, 0.596);border-radius: 10px;">Play us</p>
+            <div><button class="btn options" onclick="ModeSet(2)" style="color: black;background-color: white;"><i class=""></i>White<i class=""></i></button></div>
+            <div><button class="btn options" onclick="ModeSet(1)"><i class=""></i>Black<i class=""></i></button></div>
+          </div>`
+      }
+
+      window.addEventListener("load", function () {
+        const instruction = document.getElementById("fingers");
+
+        if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
+          instruction.textContent = "Use 2 fingers to navigate";
+        } else {
+          instruction.textContent = "Use mouse to navigate";
+        }
+        load3D();
+        // active()
+      }); 
+      const facts = [
+        "The longest official chess game lasted 269 moves.",
+        "The word 'checkmate' comes from Persian 'shah mat' – 'the king is dead'.",
+        "In 1989, a computer beat a human master for the first time.",
+        "The second book ever printed in English was about chess.",
+        "There are more possible chess games than atoms in the universe.",
+        "Bobby Fischer once played 50 simultaneous games – and won them all.",
+        "The first mechanical chess clock was invented in 1883.",
+        "A knight on the rim is considered dim – harder to use effectively.",
+        "In 2003, Kasparov drew against the chess computer 'Deep Junior'.",
+        "The first computer to beat a world champion was Deep Blue in 1997.",
+        "Blindfold chess masters can play dozens of games without seeing boards.",
+        "The longest possible game under 50-move rule is 5949 moves.",
+        "Pawn promotion doesn’t have to be a queen – it can be any piece.",
+        "Castling was introduced in the 1500s to speed up the game.",
+        "In 1924, the International Chess Federation (FIDE) was founded.",
+        "World champion Emanuel Lasker held his title for 27 years.",
+        "You can checkmate with just two bishops and a king.",
+        "The knight’s tour puzzle is over 1000 years old.",
+        "Chess boxing is a real sport – alternating rounds of chess and boxing.",
+        "In 1972, the Fischer-Spassky match was called the 'Match of the Century'."
+      ];
+
+      let shuffledFacts = [...facts];
+      let factIndex = 0;
+      let factInterval = null;
+
+      function shuffleFacts() {
+        shuffledFacts = facts.sort(() => Math.random() - 0.5);
+        factIndex = 0;
+      }
+
+      function showFact() {
+        if (factIndex >= shuffledFacts.length-1) {
+          shuffleFacts(); 
+        }
+        document.getElementById("facts").classList.remove("active")
+        
+        setTimeout(()=>{
+          document.getElementById("factstemp").innerText=document.getElementById("facts").innerText = shuffledFacts[factIndex];
+          document.getElementById("facts").classList.add("active")
+        },300)
+        factIndex++;
+      }
+
+      function startFacts() {
+        shuffleFacts();
+        showFact();
+        factInterval = setInterval(showFact, 10000); 
+      }
+
+      function stopFacts() {
+        clearInterval(factInterval);
+      }
+      startFacts();
+    </script>
+    <script src="./build/gsap.min.js"></script>
+    <script src="./build/chess.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./build/three.module.js",
+          "three/addons/": "./jsm/"
+        }
+      }
+    </script>
+
+    <script type="module" src="main.js?v=4"></script>
+    <script
+      type="module"
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+    ></script>
+    <script
+      nomodule
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+    ></script>
+  </body>
+</html>

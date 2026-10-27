@@ -1,0 +1,48 @@
+#online-panel { position: fixed; top: 12px; right: 12px; z-index: 10000; width: min(360px, calc(100vw - 24px)); border: 1px solid #537da5; border-radius: 12px; color: #eef5ff; background: #071b32f5; font: 15px/1.45 system-ui,sans-serif; box-shadow: 0 8px 32px #0005; text-align: left; }
+#online-panel summary { cursor: pointer; padding: 12px 16px; font-weight: 700; }
+#online-panel .online-body { padding: 0 16px 16px; }
+#online-panel p { margin: 8px 0 12px; }
+#online-panel .online-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#online-panel button { position: static; width: auto; height: auto; margin: 0; padding: 9px 12px; border: 1px solid #7296ba; border-radius: 6px; color: white; background: #204d78; font: inherit; cursor: pointer; }
+#online-panel button:disabled { opacity: .5; cursor: default; }
+#online-panel input { width: 100px; padding: 9px; border: 1px solid #7296ba; border-radius: 6px; color: #10243b; background: white; font: inherit; }
+#online-panel small { display: block; margin-top: 12px; color: #b0c8df; }
+#online-panel [hidden] { display: none; }
+#online-status { padding: 10px; background: #ffffff0c; border-radius: 6px; }
+#online-panel.online-connected { border-color: #61b9a4; }
+.in-vr #online-panel { display: none; }
+#enter-vr { z-index: 10001 !important; }
+#promosion { z-index: 10002; }
+@media (max-width: 600px) { #online-panel { font-size: 13px; } }
+
+#online-panel p, #online-panel label, #online-panel small { font-family: system-ui,sans-serif; font-size: inherit; line-height: 1.45; text-align: left; text-shadow: none; letter-spacing: normal; }
+#online-panel small { font-size: 12px; }
+.Reset { left: 12px; right: auto; }
+.ViewPoint { left: 76px; right: auto; }
+
+/* Keep the game accessible on narrow and short screens. */
+#online-panel { max-height: calc(100dvh - 96px); overflow-y: auto; }
+#online-panel summary { min-height: 44px; box-sizing: border-box; display: list-item; }
+#online-panel #online-hide { display: block; margin-left: auto; padding: 5px 9px; font-size: 12px; }
+@media (max-width: 600px) {
+  #online-panel { top: 8px; right: 8px; width: calc(100vw - 16px); }
+  #online-panel summary { padding: 11px 12px; }
+  #online-panel .online-body { padding: 0 12px 12px; }
+  #LoadingBox .btn.options { max-width: calc(100vw - 32px); box-sizing: border-box; padding: 16px 20px; font-size: clamp(18px, 5vw, 26px); }
+  #LoadingBox > div { max-width: 100%; }
+}
+
+#local-game-over { position: fixed; inset: 0; z-index: 10003; display: flex; align-items: center; justify-content: center; padding: 16px; background: #0009; box-sizing: border-box; font: 16px/1.5 system-ui, sans-serif; color: #eef5ff; }
+#local-game-over .game-over-card { width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px; box-sizing: border-box; background: #071b32; border: 1px solid #7296ba; border-radius: 14px; box-shadow: 0 8px 32px #0005; }
+#local-game-over h2 { margin: 0 0 12px; font: 700 24px/1.3 system-ui, sans-serif; }
+#local-game-over p { margin: 0 0 20px; font: 16px/1.5 system-ui, sans-serif; text-shadow: none; text-align: left; }
+#local-game-over .game-over-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+#local-game-over button { position: static; width: auto; min-height: 44px; padding: 10px 14px; border: 1px solid #7296ba; border-radius: 7px; color: white; background: #204d78; font: 600 15px/1.4 system-ui, sans-serif; cursor: pointer; }
+#local-game-over #local-replay { background: #16735c; }
+#local-game-over button[hidden] { display: none; }
+#local-game-over.game-over-compact { inset: auto 0 64px; padding: 8px; background: transparent; pointer-events: none; }
+#local-game-over.game-over-compact .game-over-card { width: auto; padding: 12px; pointer-events: auto; }
+#local-game-over.game-over-compact h2, #local-game-over.game-over-compact p { display: none; }
+
+.spectator-mode #enter-vr, .spectator-mode .Reset { display: none !important; }
+#online-panel #online-watch { background: #315f50; }
