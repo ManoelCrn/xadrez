@@ -1,6 +1,6 @@
-import { createSupermarket } from "./supermarket.js?v=6";
-import { setupOnline } from "./online-ui.js?v=6";
-import { setupVR } from "./vr.js?v=6";
+import { createSupermarket } from "./supermarket.js?v=7";
+import { setupOnline } from "./online-ui.js?v=7";
+import { setupVR } from "./vr.js?v=7";
 import * as THREE from "three";
 import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
